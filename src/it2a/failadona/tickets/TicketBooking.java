@@ -1,201 +1,63 @@
 package it2a.failadona.tickets;
     
 import java.sql.*;
+import java.util.InputMismatchException;
 import java.util.Scanner;
+
 
 public class TicketBooking {
 
+    static Config config = new Config(); // Instance of Config class for database operations
+    static Scanner scan = new Scanner(System.in); // Scanner for user input
 
-    public static Connection connectDB() {
-        Connection con = null;
-        try {
-            Class.forName("org.sqlite.JDBC"); 
-            con = DriverManager.getConnection("jdbc:sqlite:Tickets.db"); 
-            System.out.println("Connection Successful");
-        } catch (Exception e) {
-            System.out.println("Connection Failed: " + e);
-        }
-        return con;
+    public static void main(String[] args) {
+        mainMenu();
     }
 
+    // Method to clear the screen
+    public static void clearScreen() {
+        for (int x = 0; x < 50; x++) {
+            System.out.println("\n");
+        }
+    }
 
-    public void addRecord(String sql, Object... values) {
-        try (Connection conn = this.connectDB();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+    // Main menu
+    public static void mainMenu() {
+        while (true) {
+            System.out.println("Menu:");
+            System.out.println("1. Tickets");
+            System.out.println("2. Customers");
+            System.out.println("3. Exit");
+            System.out.print("Select option: ");
 
-
-            for (int i = 0; i < values.length; i++) {
-                if (values[i] instanceof Integer) {
-                    pstmt.setInt(i + 1, (Integer) values[i]);
-                } else if ( values[i] instanceof Double) {
-                    pstmt.setDouble(i + 1, (Double) values[i]); 
-                } else {
-                    pstmt.setString(i + 1, values[i].toString()); 
-                }
+            int choice = getIntInput(); // Helper method to get integer input
+            switch (choice) {
+                case 1:
+                    ticketOptions();
+                    break;
+                case 2:
+                    customerOptions();
+                    break;
+                case 3:
+                    System.out.println("Exiting system...");
+                    return;
+                default:
+                    System.out.println("Error: Option does not exist. Try again.");
             }
-
-            pstmt.executeUpdate();
-            System.out.println("Record added successfully!");
-        } catch (SQLException e) {
-            System.out.println("Error adding record: " + e.getMessage());
         }
     }
 
-
-    public void addTicket() {
-        Scanner sc = new Scanner(System.in);
-        System.out.print("Enter movie ticket name: ");
-        String ticketName = sc.nextLine();
-        System.out.print("Enter Quantity: ");
-        int quantity = sc.nextInt();
-        System.out.print("Enter Price: ");
-        double price = sc.nextDouble();
-        System.out.print("Discount if Morning: ");
-        double morningDiscount = sc.nextDouble();
-        System.out.print("Discount if Afternoon: ");
-        double afternoonDiscount = sc.nextDouble();
-        System.out.print("Discount if Evening: ");
-        double eveningDiscount = sc.nextDouble();
-
-        String sql = "INSERT INTO Tickets (ticket_name, quantity, price, morning_discount, afternoon_discount, evening_discount) VALUES (?, ?, ?, ?, ?, ?)";
-
-        addRecord(sql, ticketName, quantity, price, morningDiscount, afternoonDiscount, eveningDiscount);
-    }
-
-
-public void updateTicket() {
-    Scanner sc = new Scanner(System.in);
-    System.out.print("Enter movie ticket name to update: ");
-    String ticketName = sc.nextLine();
-
-    String query = "SELECT * FROM Tickets WHERE ticket_name = ?";
-    try (Connection conn = this.connectDB();
-         PreparedStatement pstmt = conn.prepareStatement(query)) {
-        pstmt.setString(1, ticketName);
-        ResultSet rs = pstmt.executeQuery();
-
-        if (rs.next()) {
-        
-            System.out.println("Updating details for ticket: " + ticketName);
-
-           
-            System.out.print("Enter new Quantity: ");
-            int newQuantity = sc.nextInt();
-            System.out.print("Enter new Price: ");
-            double newPrice = sc.nextDouble();
-            System.out.print("Discount if Morning: ");
-            double newMorningDiscount = sc.nextDouble();
-            System.out.print("Discount if Afternoon: ");
-            double newAfternoonDiscount = sc.nextDouble();
-            System.out.print("Discount if Evening: ");
-            double newEveningDiscount = sc.nextDouble();
-
-           
-            String updateSQL = "UPDATE Tickets SET quantity = ?, price = ?, morning_discount = ?, afternoon_discount = ?, evening_discount = ? WHERE ticket_name = ?";
-            try (PreparedStatement updatePstmt = conn.prepareStatement(updateSQL)) {
-                updatePstmt.setInt(1, newQuantity);
-                updatePstmt.setDouble(2, newPrice);
-                updatePstmt.setDouble(3, newMorningDiscount);
-                updatePstmt.setDouble(4, newAfternoonDiscount);
-                updatePstmt.setDouble(5, newEveningDiscount);
-                updatePstmt.setString(6, ticketName);
-                updatePstmt.executeUpdate();
-                System.out.println("Ticket updated successfully!");
-            }
-
-        } else {
-        
-            System.out.println("No Ticket Movie");
-        }
-    } catch (SQLException e) {
-        System.out.println("Error retrieving records: " + e.getMessage());
-    }
-}
-
-  
-    public void deleteTicket() {
-        Scanner sc = new Scanner(System.in);
-        System.out.print("Enter movie ticket name to delete: ");
-        String ticketName = sc.nextLine();
-
-        String sql = "DELETE FROM Tickets WHERE ticket_name = ?";
-        try (Connection conn = this.connectDB();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setString(1, ticketName);
-            int rowsAffected = pstmt.executeUpdate();
-            if (rowsAffected > 0) {
-                System.out.println("Ticket deleted successfully!");
-            } else {
-               
-                System.out.println("No Ticket Movie");
-            }
-        } catch (SQLException e) {
-            System.out.println("Error deleting ticket: " + e.getMessage());
-        }
-    }
-
-    
-    public void viewRecords(String sqlQuery, String[] columnHeaders, String[] columnNames) {
-   
-        if (columnHeaders.length != columnNames.length) {
-            System.out.println("Error: Mismatch between column headers and column names.");
-            return;
-        }
-
-        try (Connection conn = this.connectDB();
-             PreparedStatement pstmt = conn.prepareStatement(sqlQuery);
-             ResultSet rs = pstmt.executeQuery()) {
-
-         
-            StringBuilder headerLine = new StringBuilder();
-            headerLine.append("--------------------------------------------------------------------------------\n| ");
-            for (String header : columnHeaders) {
-                headerLine.append(String.format("%-20s | ", header)); 
-            }
-            headerLine.append("\n--------------------------------------------------------------------------------");
-
-            System.out.println(headerLine.toString());
-
-      
-            while (rs.next()) {
-                StringBuilder row = new StringBuilder("| ");
-                for (String colName : columnNames) {
-                    String value = rs.getString(colName);
-                    row.append(String.format("%-20s | ", value != null ? value : "")); 
-                }
-                System.out.println(row.toString());
-            }
-            System.out.println("--------------------------------------------------------------------------------");
-
-        } catch (SQLException e) {
-            System.out.println("Error retrieving records: " + e.getMessage());
-        }
-    }
-
-   
-    private void viewTickets() {
-        String ticketsQuery = "SELECT * FROM Tickets";
-        String[] ticketsHeaders = {"ID", "Ticket Name", "Quantity", "Price", "Morning Discount", "Afternoon Discount", "Evening Discount"};
-        String[] ticketsColumns = {"id", "ticket_name", "quantity", "price", "morning_discount", "afternoon_discount", "evening_discount"};
-
-        viewRecords(ticketsQuery, ticketsHeaders, ticketsColumns);
-    }
-
-   
-    public void displayMenu() {
-        Scanner sc = new Scanner(System.in);
-        boolean exit = false;
-
-        while (!exit) {
-            System.out.println("\nSelect an option:");
-            System.out.println("1. Add Ticket");
+    // Ticket options menu
+    public static void ticketOptions() {
+        while (true) {
+            System.out.println("Ticket Options:");
+            System.out.println("1. Add Tickets");
             System.out.println("2. View Tickets");
-            System.out.println("3. Update Ticket");
-            System.out.println("4. Delete Ticket");
-            System.out.println("5. Exit");
+            System.out.println("3. Update Tickets");
+            System.out.println("4. Delete Tickets");
+            System.out.println("5. Exit to Menu");
 
-            int choice = sc.nextInt();
-
+            int choice = getIntInput();
             switch (choice) {
                 case 1:
                     addTicket();
@@ -210,17 +72,290 @@ public void updateTicket() {
                     deleteTicket();
                     break;
                 case 5:
-                    exit = true;
-                    System.out.println("Exiting the program.");
-                    break;
+                    clearScreen();
+                    return;
                 default:
-                    System.out.println("Invalid option. Please select again.");
+                    System.out.println("Error: Option does not exist. Try again.");
             }
         }
     }
 
-    public static void main(String[] args) {
-        TicketBooking booking = new TicketBooking();
-        booking.displayMenu(); 
+    // Add a ticket
+    public static void addTicket() {
+        try {
+            System.out.print("Enter movie name: ");
+            String movieName = scan.nextLine();
+
+            System.out.print("Enter maximum seats: ");
+            int maxSeats = getIntInput();
+
+            System.out.print("Enter price: ");
+            double price = getDoubleInput();
+
+            System.out.print("Enter morning discount: ");
+            double morningDiscount = getDoubleInput();
+
+            System.out.print("Enter afternoon discount: ");
+            double afternoonDiscount = getDoubleInput();
+
+            System.out.print("Enter evening discount: ");
+            double eveningDiscount = getDoubleInput();
+
+            String sql = "INSERT INTO tickets (movie_name, max_seats, price, morning_discount, afternoon_discount, evening_discount) VALUES (?, ?, ?, ?, ?, ?)";
+            config.addRecord(sql, movieName, maxSeats, price, morningDiscount, afternoonDiscount, eveningDiscount);
+
+            clearScreen();
+        } catch (InputMismatchException e) {
+            System.out.println("Error: Invalid input. Try again.");
+            scan.nextLine(); // Clear scanner buffer
+        }
+    }
+
+    // View tickets
+    public static void viewTickets() {
+        String sql = "SELECT * FROM tickets";
+        String[] headers = {"ID", "Movie", "Seats", "Price", "Morning", "Afternoon", "Evening"};
+        String[] fields = {"id", "movie_name", "max_seats", "price", "morning_discount", "afternoon_discount", "evening_discount"};
+        config.viewRecords(sql, headers, fields);
+
+        System.out.println("Press any key to return to menu...");
+        scan.nextLine();
+        clearScreen();
+    }
+
+    // Update a ticket
+    public static void updateTicket() {
+        viewTickets(); // Show all tickets before updating
+
+        try {
+            System.out.print("Enter the ID of the movie to update: ");
+            int id = getIntInput();
+
+            System.out.print("Enter new movie name: ");
+            String movieName = scan.nextLine();
+
+            System.out.print("Enter new maximum seats: ");
+            int maxSeats = getIntInput();
+
+            System.out.print("Enter new price: ");
+            double price = getDoubleInput();
+
+            System.out.print("Enter new morning discount: ");
+            double morningDiscount = getDoubleInput();
+
+            System.out.print("Enter new afternoon discount: ");
+            double afternoonDiscount = getDoubleInput();
+
+            System.out.print("Enter new evening discount: ");
+            double eveningDiscount = getDoubleInput();
+
+            String sql = "UPDATE tickets SET movie_name = ?, max_seats = ?, price = ?, morning_discount = ?, afternoon_discount = ?, evening_discount = ? WHERE id = ?";
+            config.updateRecord(sql, movieName, maxSeats, price, morningDiscount, afternoonDiscount, eveningDiscount, id);
+
+            clearScreen();
+        } catch (InputMismatchException e) {
+            System.out.println("Error: Invalid input. Try again.");
+            scan.nextLine(); // Clear scanner buffer
+        }
+    }
+
+    // Delete a ticket
+    public static void deleteTicket() {
+        viewTickets(); // Show all tickets before deleting
+
+        try {
+            System.out.print("Enter the ID of the movie to delete: ");
+            int id = getIntInput();
+
+            String sql = "DELETE FROM tickets WHERE id = ?";
+            config.deleteRecord(sql, id);
+
+            System.out.println("Ticket deleted successfully.");
+            System.out.println("Press any key to return to menu...");
+            scan.nextLine();
+            clearScreen();
+        } catch (InputMismatchException e) {
+            System.out.println("Error: Invalid input. Try again.");
+            scan.nextLine(); // Clear scanner buffer
+        }
+    }
+
+    // Customer options menu
+    public static void customerOptions() {
+        while (true) {
+            System.out.println("Customer Options:");
+            System.out.println("1. Add Customer");
+            System.out.println("2. View Customers");
+            System.out.println("3. Update Customer");
+            System.out.println("4. Delete Customer");
+            System.out.println("5. Exit to Menu");
+
+            int choice = getIntInput();
+            switch (choice) {
+                case 1:
+                    addCustomer();
+                    break;
+                case 2:
+                    viewCustomers();
+                    break;
+                case 3:
+                    updateCustomer();
+                    break;
+                case 4:
+                    deleteCustomer();
+                    break;
+                case 5:
+                    clearScreen();
+                    return;
+                default:
+                    System.out.println("Error: Option does not exist. Try again.");
+            }
+        }
+    }
+
+    // Add a customer
+    public static void addCustomer() {
+        try {
+            System.out.print("Enter customer's name: ");
+            String customerName = scan.nextLine();
+
+            viewTickets(); // Show all movies
+            System.out.print("Enter the movie ID: ");
+            int movieID = getIntInput();
+
+            // Check if seats are available for the movie
+            if (!config.checkSeatsAvailability(movieID)) {
+                System.out.println("Seats are full. Returning to menu...");
+                return;
+            }
+
+            System.out.print("Enter the number of tickets to buy: ");
+            int ticketsBought = getIntInput();
+
+            System.out.print("Enter M (morning), A (afternoon), or E (evening): ");
+            char timeSlot = scan.nextLine().toUpperCase().charAt(0);
+
+            double totalDue = config.calculateTotalDue(movieID, ticketsBought, timeSlot);
+            System.out.printf("Total due: %.2f\n", totalDue);
+
+            System.out.print("Enter payment: ");
+            double payment = getDoubleInput();
+
+            if (payment < totalDue) {
+                System.out.println("Error: Insufficient payment. Try again.");
+                return;
+            }
+
+            System.out.printf("Change: %.2f\n", payment - totalDue);
+
+            String sql = "INSERT INTO customers (name, movie_id, tickets_bought, time_slot, total_due) VALUES (?, ?, ?, ?, ?)";
+            config.addRecord(sql, customerName, movieID, ticketsBought, String.valueOf(timeSlot), totalDue);
+
+            clearScreen();
+        } catch (InputMismatchException e) {
+            System.out.println("Error: Invalid input. Try again.");
+            scan.nextLine(); // Clear scanner buffer
+        }
+    }
+
+    // View customers
+    public static void viewCustomers() {
+        String sql = "SELECT * FROM customers";
+        String[] headers = {"ID", "Name", "Movie ID", "Tickets", "Time Slot", "Total Due"};
+        String[] fields = {"id", "name", "movie_id", "tickets_bought", "time_slot", "total_due"};
+        config.viewRecords(sql, headers, fields);
+
+        System.out.println("Press any key to return to menu...");
+        scan.nextLine();
+        clearScreen();
+    }
+
+    // Update a customer
+    public static void updateCustomer() {
+        viewCustomers(); // Show all customers before updating
+
+        try {
+            System.out.print("Enter the customer ID to update: ");
+            int id = getIntInput();
+
+            System.out.print("Enter new customer name: ");
+            String customerName = scan.nextLine();
+
+            viewTickets(); // Show all movies
+            System.out.print("Enter new movie ID: ");
+            int movieID = getIntInput();
+
+            // Check if seats are available for the movie
+            if (!config.checkSeatsAvailability(movieID)) {
+                System.out.println("Seats are full. Returning to menu...");
+                return;
+            }
+
+            System.out.print("Enter new number of tickets to buy: ");
+            int ticketsBought = getIntInput();
+
+            System.out.print("Enter new M (morning), A (afternoon), or E (evening): ");
+            char timeSlot = scan.nextLine().toUpperCase().charAt(0);
+
+            double totalDue = config.calculateTotalDue(movieID, ticketsBought, timeSlot);
+            System.out.printf("New total due: %.2f\n", totalDue);
+
+            String sql = "UPDATE customers SET name = ?, movie_id = ?, tickets_bought = ?, time_slot = ?, total_due = ? WHERE id = ?";
+            config.updateRecord(sql, customerName, movieID, ticketsBought, String.valueOf(timeSlot), totalDue, id);
+
+            clearScreen();
+        } catch (InputMismatchException e) {
+            System.out.println("Error: Invalid input. Try again.");
+            scan.nextLine(); // Clear scanner buffer
+        }
+    }
+
+    // Delete a customer
+    public static void deleteCustomer() {
+        viewCustomers(); // Show all customers before deleting
+
+        try {
+            System.out.print("Enter the customer ID to delete: ");
+            int id = getIntInput();
+
+            String sql = "DELETE FROM customers WHERE id = ?";
+            config.deleteRecord(sql, id);
+
+            System.out.println("Customer deleted successfully.");
+            System.out.println("Press any key to return to menu...");
+            scan.nextLine();
+            clearScreen();
+        } catch (InputMismatchException e) {
+            System.out.println("Error: Invalid input. Try again.");
+            scan.nextLine(); // Clear scanner buffer
+        }
+    }
+
+    // Helper method to get integer input safely
+    public static int getIntInput() {
+        int input = -1;
+        while (input == -1) {
+            try {
+                input = Integer.parseInt(scan.nextLine());
+            } catch (NumberFormatException e) {
+                System.out.println("Error: Invalid input. Please enter a number.");
+            }
+        }
+        return input;
+    }
+
+    // Helper method to get double input safely
+    public static double getDoubleInput() {
+        double input = -1;
+        while (input == -1) {
+            try {
+                input = Double.parseDouble(scan.nextLine());
+            } catch (NumberFormatException e) {
+                System.out.println("Error: Invalid input. Please enter a number.");
+            }
+        }
+        return input;
     }
 }
+
+
