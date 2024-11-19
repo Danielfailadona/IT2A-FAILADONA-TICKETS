@@ -9,7 +9,7 @@ import java.sql.SQLException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 
-public class config {
+public class Config {
     
     //Connection Method to SQLITE
     //Connection Method to SQLITE
@@ -17,7 +17,7 @@ public static Connection connectDB() {
         Connection con = null;
         try {
             Class.forName("org.sqlite.JDBC"); // Load the SQLite JDBC driver
-            con = DriverManager.getConnection("jdbc:sqlite:DataAppv2.db"); // Establish connection
+            con = DriverManager.getConnection("jdbc:sqlite:Tickets.db"); // Establish connection
             System.out.println("Connection Successful");
         } catch (ClassNotFoundException | SQLException e) {
             System.out.println("Connection Failed: " + e);
@@ -25,14 +25,14 @@ public static Connection connectDB() {
         return con;
     }
 
-    static config updateBalance(String sql, String name) {
+    static Config updateBalance(String sql, String name) {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
  
     
     public void addRecord(String sql, Object... values) {
-     try (Connection conn = config.connectDB(); // Use the connectDB method
+     try (Connection conn = Config.connectDB(); // Use the connectDB method
          PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
         // Loop through the values and set them in the prepared statement dynamically
@@ -77,7 +77,7 @@ public static Connection connectDB() {
             return;
         }
 
-        try (Connection conn = config.connectDB();
+        try (Connection conn = Config.connectDB();
              PreparedStatement pstmt = conn.prepareStatement(sqlQuery);
              ResultSet rs = pstmt.executeQuery()) {
 
@@ -113,7 +113,7 @@ public static Connection connectDB() {
     //-----------------------------------------------
 
     public void updateRecord(String sql, Object... values) {
-        try (Connection conn = config.connectDB(); // Use the connectDB method
+        try (Connection conn = Config.connectDB(); // Use the connectDB method
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             // Loop through the values and set them in the prepared statement dynamically
@@ -153,7 +153,7 @@ public static Connection connectDB() {
 
     // Add this method in the config class
 public void deleteRecord(String sql, Object... values) {
-    try (Connection conn = config.connectDB();
+    try (Connection conn = Config.connectDB();
          PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
         // Loop through the values and set them in the prepared statement dynamically
