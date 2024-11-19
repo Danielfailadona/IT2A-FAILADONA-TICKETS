@@ -88,7 +88,7 @@ public class TicketBooking {
                     System.out.println("Invalid choice. Please try again.");
             }
         }
-    }
+    }   
     private static Connection connect() {
         Connection conn = null;
         try {
@@ -457,36 +457,39 @@ private static void insertAvailableTickets(Connection conn, Scanner scanner) thr
     }
 }
 
+private static void viewPurchaseHistory(Connection conn) throws SQLException {
+    String query = "SELECT p.purchase_id, m.title, p.customer_name, p.ticket_count, p.total_amount, "
+                 + "p.purchase_date, p.payment_status, p.theater_type, ms.showing_time "
+                 + "FROM purchases p "
+                 + "JOIN movies m ON p.movie_id = m.id "
+                 + "JOIN movie_showtimes ms ON p.showtime_id = ms.id";
+    try (PreparedStatement stmt = conn.prepareStatement(query);
+         ResultSet rs = stmt.executeQuery()) {
 
-    private static void viewPurchaseHistory(Connection conn) throws SQLException {
-        String query = "SELECT p.purchase_id, m.title, p.customer_name, p.ticket_count, p.total_amount, "
-                + "p.purchase_date, p.payment_status, p.theater_type, p.showtime "
-                + "FROM purchases p JOIN movies m ON p.movie_id = m.id";
-        try (PreparedStatement stmt = conn.prepareStatement(query);
-             ResultSet rs = stmt.executeQuery()) {
+        System.out.println("\nPurchase History:");
+        System.out.println("+-------------+------------------------+-------------------+-------------+-------------+-------------------+-------------------+-------------------+-------------------+");
+        System.out.println("| Purchase ID | Movie Title            | Customer Name     | Tickets     | Total Amount| Purchase Date     | Payment Status    | Theater Type      | Showtime          |");
+        System.out.println("+-------------+------------------------+-------------------+-------------+-------------+-------------------+-------------------+-------------------+-------------------+");
 
-            System.out.println("\nPurchase History:");
-            System.out.println("+-------------+------------------------+-------------------+-------------+-------------+-------------------+-------------------+-------------------+");
-            System.out.println("| Purchase ID | Movie Title            | Customer Name     | Tickets     | Total Amount| Purchase Date     | Payment Status    | Theater Type      | Showtime          |");
-            System.out.println("+-------------+------------------------+-------------------+-------------+-------------+-------------------+-------------------+-------------------+-------------------+");
+        while (rs.next()) {
+            int purchaseId = rs.getInt("purchase_id");
+            String title = rs.getString("title");
+            String customerName = rs.getString("customer_name");
+            int ticketCount = rs.getInt("ticket_count");
+            double totalAmount = rs.getDouble("total_amount");
+            String purchaseDate = rs.getString("purchase_date");
+            String paymentStatus = rs.getString("payment_status");
+            String theaterType = rs.getString("theater_type");
+            String showtime = rs.getString("showing_time");
 
-            while (rs.next()) {
-                int purchaseId = rs.getInt("purchase_id");
-                String title = rs.getString("title");
-                String customerName = rs.getString("customer_name");
-                int ticketCount = rs.getInt("ticket_count");
-                double totalAmount = rs.getDouble("total_amount");
-                String purchaseDate = rs.getString("purchase_date");
-                String paymentStatus = rs.getString("payment_status");
-                String theaterType = rs.getString("theater_type");
-                String showtime = rs.getString("showtime");
-
-                System.out.printf("| %-11d | %-22s | %-17s | %-11d | %-11.2f | %-17s | %-17s | %-17s | %-17s |\n", 
-                                  purchaseId, title, customerName, ticketCount, totalAmount, purchaseDate, paymentStatus, theaterType, showtime);
-            }
-            System.out.println("+-------------+------------------------+-------------------+-------------+-------------+-------------------+-------------------+-------------------+-------------------+");
+            System.out.printf("| %-11d | %-22s | %-17s | %-11d | %-11.2f | %-17s | %-17s | %-17s | %-17s |\n", 
+                              purchaseId, title, customerName, ticketCount, totalAmount, purchaseDate, paymentStatus, theaterType, showtime);
         }
+        System.out.println("+-------------+------------------------+-------------------+-------------+-------------+-------------------+-------------------+-------------------+-------------------+");
+    } catch (SQLException e) {
+        System.out.println("Error fetching purchase history: " + e.getMessage());
     }
+}
 
     private static void updateMoviePrice(Connection conn, Scanner scanner) throws SQLException {
         System.out.println("Enter movie ID to update price:");
