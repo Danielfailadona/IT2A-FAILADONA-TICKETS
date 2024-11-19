@@ -1,149 +1,220 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package it2a.failadona.tickets;
 
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.Date;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 
-public class Config {
-
-    // Method to establish a connection to the SQLite database
-    public static Connection connectDB() {
+public class config {
+    
+    //Connection Method to SQLITE
+    //Connection Method to SQLITE
+public static Connection connectDB() {
         Connection con = null;
         try {
             Class.forName("org.sqlite.JDBC"); // Load the SQLite JDBC driver
-            con = DriverManager.getConnection("jdbc:sqlite:Tickets.db"); // Establish connection
+            con = DriverManager.getConnection("jdbc:sqlite:DataAppv2.db"); // Establish connection
             System.out.println("Connection Successful");
-        } catch (Exception e) {
+        } catch (ClassNotFoundException | SQLException e) {
             System.out.println("Connection Failed: " + e);
         }
         return con;
     }
 
-    // Method to display records from the database
-    public void viewRecords(String query, String[] columnHeaders, String[] columnFields) {
-        try (Connection conn = this.connectDB();
-             Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery(query)) {
-
-            System.out.println(String.join(" | ", columnHeaders));
-            while (rs.next()) {
-                for (String field : columnFields) {
-                    System.out.print(rs.getString(field) + " | ");
-                }
-                System.out.println();
-            }
-
-        } catch (SQLException e) {
-            System.out.println("Error viewing records: " + e.getMessage());
-        }
+    static config updateBalance(String sql, String name) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
-    // Method to add a record to the database
+ 
+    
     public void addRecord(String sql, Object... values) {
-        try (Connection conn = this.connectDB();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+     try (Connection conn = config.connectDB(); // Use the connectDB method
+         PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
-            for (int i = 0; i < values.length; i++) {
-                pstmt.setObject(i + 1, values[i]);
+        // Loop through the values and set them in the prepared statement dynamically
+        for (int i = 0; i < values.length; i++) {
+            if (values[i] instanceof Integer) {
+                pstmt.setInt(i + 1, (Integer) values[i]); // If the value is Integer
+            } else if (values[i] instanceof Double) {
+                pstmt.setDouble(i + 1, (Double) values[i]); // If the value is Double
+            } else if (values[i] instanceof Float) {
+                pstmt.setFloat(i + 1, (Float) values[i]); // If the value is Float
+            } else if (values[i] instanceof Long) {
+                pstmt.setLong(i + 1, (Long) values[i]); // If the value is Long
+            } else if (values[i] instanceof Boolean) {
+                pstmt.setBoolean(i + 1, (Boolean) values[i]); // If the value is Boolean
+            } else if (values[i] instanceof java.util.Date) {
+                pstmt.setDate(i + 1, new java.sql.Date(((java.util.Date) values[i]).getTime())); // If the value is Date
+            } else if (values[i] instanceof java.sql.Date) {
+                pstmt.setDate(i + 1, (java.sql.Date) values[i]); // If it's already a SQL Date
+            } else if (values[i] instanceof java.sql.Timestamp) {
+                pstmt.setTimestamp(i + 1, (java.sql.Timestamp) values[i]); // If the value is Timestamp
+            } else {
+                pstmt.setString(i + 1, values[i].toString()); // Default to String for other types
             }
-            pstmt.executeUpdate();
-            System.out.println("Record added successfully.");
+        }
 
+            pstmt.executeUpdate();
+            System.out.println("Record added successfully!");
         } catch (SQLException e) {
             System.out.println("Error adding record: " + e.getMessage());
         }
     }
+    
+    //---------------------------------------------------------------------------------------------------------------
+    //VIEW METHOD
+    //---------------------------------------------------------------------------------------------------------------
+    
+     
+    public void viewRecords(String sqlQuery, String[] columnHeaders, String[] columnNames) {
+        // Check that columnHeaders and columnNames arrays are the same length
+        if (columnHeaders.length != columnNames.length) {
+            System.out.println("Error: Mismatch between column headers and column names.");
+            return;
+        }
 
-    // Method to update a record in the database
+        try (Connection conn = config.connectDB();
+             PreparedStatement pstmt = conn.prepareStatement(sqlQuery);
+             ResultSet rs = pstmt.executeQuery()) {
+
+            // Print the headers dynamically
+            StringBuilder headerLine = new StringBuilder();
+            headerLine.append("--------------------------------------------------------------------------------------------------------------------\n| ");
+            for (String header : columnHeaders) {
+                headerLine.append(String.format("%-20s | ", header)); // Adjust formatting as needed
+            }
+            headerLine.append("\n-------------------------------------------------------------------------------------------------------------------");
+
+            System.out.println(headerLine.toString());
+
+            // Print the rows dynamically based on the provided column names
+            while (rs.next()) {
+                StringBuilder row = new StringBuilder("| ");
+                for (String colName : columnNames) {
+                    String value = rs.getString(colName);
+                    row.append(String.format("%-20s | ", value != null ? value : "")); // Adjust formatting
+                }
+                System.out.println(row.toString());
+            }
+            System.out.println("-------------------------------------------------------------------------------------------------------------------");
+
+        } catch (SQLException e) {
+            System.out.println("Error retrieving records: " + e.getMessage());
+        }
+    }
+    
+    
+    //-----------------------------------------------
+    // UPDATE METHOD
+    //-----------------------------------------------
+
     public void updateRecord(String sql, Object... values) {
-        try (Connection conn = this.connectDB();
+        try (Connection conn = config.connectDB(); // Use the connectDB method
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
+            // Loop through the values and set them in the prepared statement dynamically
             for (int i = 0; i < values.length; i++) {
-                pstmt.setObject(i + 1, values[i]);
+                if (values[i] instanceof Integer) {
+                    pstmt.setInt(i + 1, (Integer) values[i]); // If the value is Integer
+                } else if (values[i] instanceof Double) {
+                    pstmt.setDouble(i + 1, (Double) values[i]); // If the value is Double
+                } else if (values[i] instanceof Float) {
+                    pstmt.setFloat(i + 1, (Float) values[i]); // If the value is Float
+                } else if (values[i] instanceof Long) {
+                    pstmt.setLong(i + 1, (Long) values[i]); // If the value is Long
+                } else if (values[i] instanceof Boolean) {
+                    pstmt.setBoolean(i + 1, (Boolean) values[i]); // If the value is Boolean
+                } else if (values[i] instanceof java.util.Date) {
+                    pstmt.setDate(i + 1, new java.sql.Date(((java.util.Date) values[i]).getTime())); // If the value is Date
+                } else if (values[i] instanceof java.sql.Date) {
+                    pstmt.setDate(i + 1, (java.sql.Date) values[i]); // If it's already a SQL Date
+                } else if (values[i] instanceof java.sql.Timestamp) {
+                    pstmt.setTimestamp(i + 1, (java.sql.Timestamp) values[i]); // If the value is Timestamp
+                } else {
+                    pstmt.setString(i + 1, values[i].toString()); // Default to String for other types
+                }
             }
-            pstmt.executeUpdate();
-            System.out.println("Record updated successfully.");
 
+            pstmt.executeUpdate();
+            System.out.println("Record updated successfully!");
         } catch (SQLException e) {
             System.out.println("Error updating record: " + e.getMessage());
         }
     }
+    
+    
+    //-----------------------------------------------
+    // DELETE METHOD
+    //-----------------------------------------------
 
-    // Method to delete a record from the database
-    public void deleteRecord(String sql, int id) {
-        try (Connection conn = this.connectDB();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+    // Add this method in the config class
+public void deleteRecord(String sql, Object... values) {
+    try (Connection conn = config.connectDB();
+         PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
-            pstmt.setInt(1, id);
-            pstmt.executeUpdate();
-            System.out.println("Record deleted successfully.");
-
-        } catch (SQLException e) {
-            System.out.println("Error deleting record: " + e.getMessage());
-        }
-    }
-
-    // Check seat availability for a specific movie
-    public boolean checkSeatsAvailability(int movieID) {
-        String sql = "SELECT max_seats FROM tickets WHERE id = ?";
-        try (Connection conn = this.connectDB();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-
-            pstmt.setInt(1, movieID);
-            ResultSet rs = pstmt.executeQuery();
-
-            if (rs.next()) {
-                int availableSeats = rs.getInt("max_seats");
-                return availableSeats > 0;
+        // Loop through the values and set them in the prepared statement dynamically
+        for (int i = 0; i < values.length; i++) {
+            if (values[i] instanceof Integer) {
+                pstmt.setInt(i + 1, (Integer) values[i]); // If the value is Integer
+            } else {
+                pstmt.setString(i + 1, values[i].toString()); // Default to String for other types
             }
-        } catch (SQLException e) {
-            System.out.println("Error checking seat availability: " + e.getMessage());
         }
-        return false;
+
+        pstmt.executeUpdate();
+        System.out.println("Record deleted successfully!");
+    } catch (SQLException e) {
+        System.out.println("Error deleting record: " + e.getMessage());
     }
+}
+  
 
-    // Calculate total due for a ticket purchase with discounts
-    public double calculateTotalDue(int movieID, int ticketsBought, char timeSlot) {
-        double total = 0;
-        String sql = "SELECT price, morning_discount, afternoon_discount, evening_discount FROM tickets WHERE id = ?";
+private static void viewTransactionHistory(Connection conn) throws SQLException {
+    String query = "SELECT t.transaction_id, a1.name AS sender, a2.name AS recipient, t.amount, t.transaction_date "
+                 + "FROM transactions t "
+                 + "JOIN accounts a1 ON t.sender_id = a1.id "
+                 + "JOIN accounts a2 ON t.recipient_id = a2.id "
+                 + "ORDER BY t.transaction_date DESC"; // Add ordering for better clarity
 
-        try (Connection conn = this.connectDB();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+    try (PreparedStatement stmt = conn.prepareStatement(query);
+         ResultSet rs = stmt.executeQuery()) {
 
-            pstmt.setInt(1, movieID);
-            ResultSet rs = pstmt.executeQuery();
+        System.out.println("Transaction History:");
+        if (!rs.next()) {
+            System.out.println("No transactions found.");
+            return; // No transactions
+        }
 
-            if (rs.next()) {
-                double price = rs.getDouble("price");
-                double discount = 0;
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss"); // Customize the format
 
-                switch (timeSlot) {
-                    case 'M':
-                        discount = rs.getDouble("morning_discount");
-                        break;
-                    case 'A':
-                        discount = rs.getDouble("afternoon_discount");
-                        break;
-                    case 'E':
-                        discount = rs.getDouble("evening_discount");
-                        break;
-                }
+        do {
+            int transactionId = rs.getInt("transaction_id");
+            String sender = rs.getString("sender");
+            String recipient = rs.getString("recipient");
+            double amount = rs.getDouble("amount");
+            String rawDate = rs.getString("transaction_date");
 
-                total = (price * ticketsBought) * (1 - discount / 100);
+            // Convert raw date string to Date and format it
+            try {
+                Date transactionDate = (Date) dateFormat.parse(rawDate);
+                String formattedDate = dateFormat.format(transactionDate);
+                System.out.println("Transaction ID: " + transactionId 
+                                   + ", Sender: " + sender 
+                                   + ", Recipient: " + recipient 
+                                   + ", Amount: $" + amount 
+                                   + ", Date: " + formattedDate);
+            } catch (ParseException e) {
+                System.out.println("Error formatting date: " + rawDate);
             }
 
-        } catch (SQLException e) {
-            System.out.println("Error calculating total due: " + e.getMessage());
-        }
-
-        return total;
+        } while (rs.next());
     }
-
-    // Additional helper methods could be added here based on future requirements
 }
 
+
     
+}
