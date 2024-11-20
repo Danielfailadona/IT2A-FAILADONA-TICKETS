@@ -342,12 +342,24 @@ private static void addNewMovie(Connection conn, Scanner scanner) throws SQLExce
 private static void purchaseTicket(Connection conn, Scanner scanner) throws SQLException {
     System.out.println("--------------------------------------------------------------------------------------------------------------------");
 
-    System.out.println("Select Theater Type:");
-    System.out.println("1. Premium Theater");
-    System.out.println("2. VIP Theater");
-    System.out.print("Enter your choice (1 or 2): ");
-    int theaterChoice = scanner.nextInt();
-    scanner.nextLine();  // Consume newline
+    // Validate theater choice input
+    int theaterChoice = -1;
+    while (theaterChoice != 1 && theaterChoice != 2) {
+        System.out.println("Select Theater Type:");
+        System.out.println("1. Premium Theater");
+        System.out.println("2. VIP Theater");
+        System.out.print("Enter your choice (1 or 2): ");
+        if (scanner.hasNextInt()) {
+            theaterChoice = scanner.nextInt();
+            scanner.nextLine();  // Consume newline
+            if (theaterChoice != 1 && theaterChoice != 2) {
+                System.out.println("Invalid choice. Please enter 1 or 2.");
+            }
+        } else {
+            scanner.next();  // Consume invalid input
+            System.out.println("Invalid input. Please enter a number (1 or 2).");
+        }
+    }
 
     String theaterType = "";
     double ticketPrice = 0.0;
@@ -359,10 +371,6 @@ private static void purchaseTicket(Connection conn, Scanner scanner) throws SQLE
     } else if (theaterChoice == 2) {
         theaterType = "VIP Theater";
         ticketPrice = 20.0;
-    } else {
-        System.out.println("Invalid choice. Defaulting to Premium Theater.");
-        theaterType = "Premium Theater";
-        ticketPrice = 12.0;
     }
 
     // Fetch and display available movies in the selected theater type
@@ -393,7 +401,7 @@ private static void purchaseTicket(Connection conn, Scanner scanner) throws SQLE
         }
     }
 
-    // Ask the user to select a movie by ID
+    // Ask the user to select a movie by ID with validation
     int movieId = -1;
     while (movieId <= 0) {
         System.out.print("\nEnter the ID of the movie you want to purchase tickets for: ");
@@ -446,10 +454,21 @@ private static void purchaseTicket(Connection conn, Scanner scanner) throws SQLE
         }
     }
 
-    // Allow user to select a showing time
-    System.out.print("\nSelect a showing time ID: ");
-    int selectedShowtimeId = scanner.nextInt();
-    scanner.nextLine();  // Consume newline
+    // Allow user to select a showing time with validation
+    int selectedShowtimeId = -1;
+    while (selectedShowtimeId <= 0) {
+        System.out.print("\nSelect a showing time ID: ");
+        if (scanner.hasNextInt()) {
+            selectedShowtimeId = scanner.nextInt();
+            scanner.nextLine();  // Consume newline
+            if (selectedShowtimeId <= 0) {
+                System.out.println("Invalid showing time ID. Please enter a valid ID.");
+            }
+        } else {
+            scanner.next();  // Consume invalid input
+            System.out.println("Invalid input. Please enter a valid number.");
+        }
+    }
 
     // Check if the showing time ID is valid and if enough tickets are available
     String selectedShowingTime = "";
@@ -467,10 +486,21 @@ private static void purchaseTicket(Connection conn, Scanner scanner) throws SQLE
         }
     }
 
-    // Ask for the number of tickets
-    System.out.print("Enter the number of tickets: ");
-    int ticketCount = scanner.nextInt();
-    scanner.nextLine();  // Consume newline
+    // Ask for the number of tickets with validation
+    int ticketCount = -1;
+    while (ticketCount <= 0) {
+        System.out.print("Enter the number of tickets: ");
+        if (scanner.hasNextInt()) {
+            ticketCount = scanner.nextInt();
+            scanner.nextLine();  // Consume newline
+            if (ticketCount <= 0) {
+                System.out.println("Invalid number of tickets. Please enter a valid number.");
+            }
+        } else {
+            scanner.next();  // Consume invalid input
+            System.out.println("Invalid input. Please enter a number.");
+        }
+    }
 
     // Check if there are enough available tickets
     if (ticketCount > availableTickets) {
@@ -530,6 +560,7 @@ private static void purchaseTicket(Connection conn, Scanner scanner) throws SQLE
         }
     }
 }
+
 
     
     
