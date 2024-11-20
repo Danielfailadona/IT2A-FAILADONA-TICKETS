@@ -21,74 +21,110 @@ public class TicketBooking {
         }
     }
 
-    private static void mainMenu(Connection conn, Scanner scanner) {
-        boolean exit = false;  // Flag to exit the menu loop
-        while (!exit) {
-            System.out.println("\n--- Movie Theater System ---");
-            System.out.println("1. View Movies");
-            System.out.println("2. Purchase Tickets");
-            System.out.println("3. View Purchase History");
-            System.out.println("4. Add New Movie");
-            System.out.println("5. Update Movie Price");
-            System.out.println("6. Add Showtime (Available Tickets)");
-            System.out.println("7. Exit");
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+////////////////////////////////////MENU////////////////////////////////////
+   private static void mainMenu(Connection conn, Scanner scanner) {
+    boolean exit = false;  // Flag to exit the menu loop
+    while (!exit) {
+        System.out.println("\n--- Movie Theater System ---");
+        System.out.println("1. View Movies");
+        System.out.println("2. Purchase Tickets");
+        System.out.println("3. View Purchase History");
+        System.out.println("4. Add New Movie");
+        System.out.println("5. Update Movie Price");
+        System.out.println("6. Add Showtime (Available Tickets)");
+        System.out.println("7. Exit");
 
-            System.out.print("Select an option: ");
-            int choice = scanner.nextInt();
+        int choice = getValidMenuChoice(scanner);
+
+        switch (choice) {
+            case 1:
+                try {
+                    viewMovies(conn, scanner);
+                } catch (SQLException e) {
+                    System.out.println("Error: " + e.getMessage());
+                }
+                break;
+            case 2:
+                try {
+                    purchaseTicket(conn, scanner);
+                } catch (SQLException e) {
+                    System.out.println("Error: " + e.getMessage());
+                }
+                break;
+            case 3:
+                try {
+                    viewPurchaseHistory(conn);
+                } catch (SQLException e) {
+                    System.out.println("Error: " + e.getMessage());
+                }
+                break;
+            case 4:
+                try {
+                    addNewMovie(conn, scanner);
+                } catch (SQLException e) {
+                    System.out.println("Error: " + e.getMessage());
+                }
+                break;
+            case 5:
+                try {
+                    updateMoviePrice(conn, scanner);
+                } catch (SQLException e) {
+                    System.out.println("Error: " + e.getMessage());
+                }
+                break;
+            case 6:
+                try {
+                    insertAvailableTickets(conn, scanner);
+                } catch (SQLException e) {
+                    System.out.println("Error: " + e.getMessage());
+                }
+                break;
+            case 7:
+                System.out.println("Exiting... Goodbye!");
+                exit = true;  // Set exit flag to true to break the loop
+                break;
+            default:
+                System.out.println("Invalid choice. Please try again.");
+        }
+    }
+}
+
+private static int getValidMenuChoice(Scanner scanner) {
+    int choice = -1;
+    boolean validChoice = false;
+
+    while (!validChoice) {
+        System.out.print("Select an option (1-7): ");
+        if (scanner.hasNextInt()) {
+            choice = scanner.nextInt();
             scanner.nextLine();  // Consume newline
 
-            switch (choice) {
-                case 1:
-                    try {
-                        viewMovies(conn, scanner);
-                    } catch (SQLException e) {
-                        System.out.println("Error: " + e.getMessage());
-                    }
-                    break;
-                case 2:
-                    try {
-                        purchaseTicket(conn, scanner);
-                    } catch (SQLException e) {
-                        System.out.println("Error: " + e.getMessage());
-                    }
-                    break;
-                case 3:
-                    try {
-                        viewPurchaseHistory(conn);
-                    } catch (SQLException e) {
-                        System.out.println("Error: " + e.getMessage());
-                    }
-                    break;
-                case 4:
-                    try {
-                        addNewMovie(conn, scanner);
-                    } catch (SQLException e) {
-                        System.out.println("Error: " + e.getMessage());
-                    }
-                    break;
-                case 5:
-                    try {
-                        updateMoviePrice(conn, scanner);
-                    } catch (SQLException e) {
-                        System.out.println("Error: " + e.getMessage());
-                    }
-                    break;
-                case 6:
-                    try {
-                        insertAvailableTickets(conn, scanner);
-                    } catch (SQLException e) {
-                        System.out.println("Error: " + e.getMessage());
-                    }
-                    break;
-                case 7:
-                    System.out.println("Exiting... Goodbye!");
-                    exit = true;  // Set exit flag to true to break the loop
-                    break;
-                default:
-                    System.out.println("Invalid choice. Please try again.");
+            if (choice >= 1 && choice <= 7) {
+                validChoice = true;
+            } else {
+                System.out.println("\nPlease select a number between 1 and 7.");
             }
+        } else {
+            System.out.println("\nPlease enter a valid number.");
+            scanner.next();  // Consume invalid input
         }
-    }   
+    }
+    return choice;
+}
+
     private static Connection connect() {
         Connection conn = null;
         try {
@@ -128,117 +164,184 @@ public class TicketBooking {
         }
     }
 
-    private static void viewMovies(Connection conn, Scanner scanner) throws SQLException {
-        System.out.println("Select Theater Type:");
-        System.out.println("1. Premium Theater");
-        System.out.println("2. VIP Theater");
-        System.out.print("Enter your choice (1 or 2): ");
-        int theaterChoice = scanner.nextInt();
-        scanner.nextLine();  // Consume newline
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+////////////////////////////////////VIEW MOVIES////////////////////////////////////
+   private static void viewMovies(Connection conn, Scanner scanner) throws SQLException {
+    System.out.println("--------------------------------------------------------------------------------------------------------------------");
+    System.out.println("Select Theater Type:");
+    System.out.println("1. Premium Theater");
+    System.out.println("2. VIP Theater");
 
-        String theaterType = "";
-        double ticketPrice = 0.0;
+    String theaterType = getTheaterChoice(scanner);
 
-        if (theaterChoice == 1) {
-            theaterType = "Premium Theater";
-            ticketPrice = 12.0;
-        } else if (theaterChoice == 2) {
-            theaterType = "VIP Theater";
-            ticketPrice = 20.0;
-        } else {
-            System.out.println("Invalid choice. Defaulting to Premium Theater.");
-            theaterType = "Premium Theater";
-            ticketPrice = 12.0;
-        }
+    String query = "SELECT id, title, director, release_year, genre, rating, theater_type FROM movies WHERE theater_type = ?";
+    try (PreparedStatement stmt = conn.prepareStatement(query)) {
+        stmt.setString(1, theaterType);
+        try (ResultSet rs = stmt.executeQuery()) {
 
-        // Modify the query to filter by the selected theater type
-        String query = "SELECT id, title, director, release_year, genre, rating, theater_type FROM movies WHERE theater_type = ?";
-        try (PreparedStatement stmt = conn.prepareStatement(query)) {
-            stmt.setString(1, theaterType);  // Set the selected theater type in the query
-            try (ResultSet rs = stmt.executeQuery()) {
+            System.out.println("--------------------------------------------------------------------------------------------------------------------");
 
-                System.out.println("\nMovies List for " + theaterType + ":");
-                System.out.println("+-----+------------------------+-------------------+-------------+-------------------+--------+-------------------+");
-                System.out.println("| ID  | Title                  | Director          | Year        | Genre             | Rating | Theater Type       |");
-                System.out.println("+-----+------------------------+-------------------+-------------+-------------------+--------+-------------------+");
+            System.out.println("\nMovies List for " + theaterType + ":");
+            System.out.println("+-----+------------------------+-------------------+-------------+-------------------+--------+-------------------+");
+            System.out.println("| ID  | Title                  | Director          | Year        | Genre             | Rating | Theater Type       |");
+            System.out.println("+-----+------------------------+-------------------+-------------+-------------------+--------+-------------------+");
 
-                if (!rs.isBeforeFirst()) {
-                    System.out.println("|                      No movies found for " + theaterType + "                        |");
-                } else {
-                    while (rs.next()) {
-                        int id = rs.getInt("id");
-                        String title = rs.getString("title");
-                        String director = rs.getString("director");
-                        int releaseYear = rs.getInt("release_year");
-                        String genre = rs.getString("genre");
-                        double rating = rs.getDouble("rating");
-                        String movieTheaterType = rs.getString("theater_type");  // Fetch the theater type to confirm
-                        System.out.printf("| %-3d | %-22s | %-17s | %-11d | %-17s | %-6.1f | %-17s |\n", 
-                                          id, title, director, releaseYear, genre, rating, movieTheaterType);
-                    }
-                }
-                System.out.println("+-----+------------------------+-------------------+-------------+-------------------+--------+-------------------+");
-            }
-        }
-    }
-
-    private static void addNewMovie(Connection conn, Scanner scanner) throws SQLException {
-        System.out.print("Enter movie title: ");
-        String title = scanner.nextLine().trim();
-
-        System.out.print("Enter movie director: ");
-        String director = scanner.nextLine().trim();
-
-        System.out.print("Enter release year: ");
-        int releaseYear = scanner.nextInt();
-        scanner.nextLine();  // Consume newline
-
-        System.out.print("Enter genre: ");
-        String genre = scanner.nextLine().trim();
-
-        System.out.print("Enter movie rating (e.g., 8.5): ");
-        double rating = scanner.nextDouble();
-        scanner.nextLine();  // Consume newline
-
-        // Ask the user for the theater type
-        System.out.println("Select the theater type for this movie:");
-        System.out.println("1. Premium Theater");
-        System.out.println("2. VIP Theater");
-        System.out.print("Enter your choice (1 or 2): ");
-        int theaterChoice = scanner.nextInt();
-        scanner.nextLine();  // Consume newline
-
-        String theaterType = "";
-        if (theaterChoice == 1) {
-            theaterType = "Premium Theater";
-        } else if (theaterChoice == 2) {
-            theaterType = "VIP Theater";
-        } else {
-            System.out.println("Invalid choice. Defaulting to Premium Theater.");
-            theaterType = "Premium Theater";
-        }
-
-        String insertMovieQuery = "INSERT INTO movies (title, director, release_year, genre, rating, theater_type) "
-                + "VALUES (?, ?, ?, ?, ?, ?)";
-
-        try (PreparedStatement stmt = conn.prepareStatement(insertMovieQuery)) {
-            stmt.setString(1, title);
-            stmt.setString(2, director);
-            stmt.setInt(3, releaseYear);
-            stmt.setString(4, genre);
-            stmt.setDouble(5, rating);
-            stmt.setString(6, theaterType);  // Add theater type to the database
-
-            int rowsInserted = stmt.executeUpdate();
-            if (rowsInserted > 0) {
-                System.out.println("Movie added successfully to the database!");
+            if (!rs.isBeforeFirst()) {
+                System.out.println("|                      No movies found for " + theaterType + "                        |");
             } else {
-                System.out.println("Failed to add the movie.");
+                while (rs.next()) {
+                    int id = rs.getInt("id");
+                    String title = rs.getString("title");
+                    String director = rs.getString("director");
+                    int releaseYear = rs.getInt("release_year");
+                    String genre = rs.getString("genre");
+                    double rating = rs.getDouble("rating");
+                    String movieTheaterType = rs.getString("theater_type");
+                    System.out.printf("| %-3d | %-22s | %-17s | %-11d | %-17s | %-6.1f | %-17s |\n", 
+                                      id, title, director, releaseYear, genre, rating, movieTheaterType);
+                }
             }
+            System.out.println("+-----+------------------------+-------------------+-------------+-------------------+--------+-------------------+");
+        }
+    }
+}
+
+private static String getTheaterChoice(Scanner scanner) {
+    String theaterType = "";
+    boolean validChoice = false;
+
+    while (!validChoice) {
+        System.out.print("Enter your choice (1 or 2): ");
+        if (scanner.hasNextInt()) {
+            int theaterChoice = scanner.nextInt();
+            scanner.nextLine();  // Consume newline
+
+            switch (theaterChoice) {
+                case 1:
+                    theaterType = "Premium Theater";
+                    validChoice = true;
+                    break;
+                case 2:
+                    theaterType = "VIP Theater";
+                    validChoice = true;
+                    break;
+                default:
+                    System.out.println("\nPlease select 1 for Premium Theater or 2 for VIP Theater.");
+            }
+        } else {
+            System.out.println("\nPlease enter a number.");
+            scanner.next();  // Consume invalid input
+        }
+    }
+    return theaterType;
+}
+
+private static void addNewMovie(Connection conn, Scanner scanner) throws SQLException {
+    System.out.print("Enter movie title: ");
+    String title = scanner.nextLine().trim();
+    if (title.isEmpty()) {
+        System.out.println("Title cannot be empty. Movie not added.");
+        return;
+    }
+
+    System.out.print("Enter movie director: ");
+    String director = scanner.nextLine().trim();
+    if (director.isEmpty()) {
+        System.out.println("Director cannot be empty. Movie not added.");
+        return;
+    }
+
+    System.out.print("Enter release year: ");
+    int releaseYear;
+    while (true) {
+        if (scanner.hasNextInt()) {
+            releaseYear = scanner.nextInt();
+            if (releaseYear > 1900 && releaseYear <= 2024) {  // Basic year validation
+                break;
+            } else {
+                System.out.println("Please enter a valid year between 1900 and 2024.");
+            }
+        } else {
+            System.out.println("Invalid input. Please enter a valid year.");
+            scanner.next();  // Consume invalid input
         }
     }
 
+    scanner.nextLine();  // Consume newline
+    System.out.print("Enter genre: ");
+    String genre = scanner.nextLine().trim();
+    if (genre.isEmpty()) {
+        System.out.println("Genre cannot be empty. Movie not added.");
+        return;
+    }
+
+    System.out.print("Enter movie rating (e.g., 8.5): ");
+    double rating = 0.0;
+    while (true) {
+        if (scanner.hasNextDouble()) {
+            rating = scanner.nextDouble();
+            if (rating >= 0 && rating <= 10) {  // Validate rating range
+                break;
+            } else {
+                System.out.println("Please enter a rating between 0 and 10.");
+            }
+        } else {
+            System.out.println("Invalid input. Please enter a valid rating.");
+            scanner.next();  // Consume invalid input
+        }
+    }
+
+    String theaterType = getTheaterChoice(scanner);
+
+    String insertMovieQuery = "INSERT INTO movies (title, director, release_year, genre, rating, theater_type) "
+            + "VALUES (?, ?, ?, ?, ?, ?)";
+
+    try (PreparedStatement stmt = conn.prepareStatement(insertMovieQuery)) {
+        stmt.setString(1, title);
+        stmt.setString(2, director);
+        stmt.setInt(3, releaseYear);
+        stmt.setString(4, genre);
+        stmt.setDouble(5, rating);
+        stmt.setString(6, theaterType);
+
+        int rowsInserted = stmt.executeUpdate();
+        if (rowsInserted > 0) {
+            System.out.println("Movie added successfully to the database!");
+        } else {
+            System.out.println("Failed to add the movie.");
+        }
+    }
+}
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+////////////////////////////////////PURCHASE TICKETS////////////////////////////////////
 private static void purchaseTicket(Connection conn, Scanner scanner) throws SQLException {
+    System.out.println("--------------------------------------------------------------------------------------------------------------------");
+
     System.out.println("Select Theater Type:");
     System.out.println("1. Premium Theater");
     System.out.println("2. VIP Theater");
@@ -427,7 +530,23 @@ private static void purchaseTicket(Connection conn, Scanner scanner) throws SQLE
         }
     }
 }
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+////////////////////////////////////ADD TICKET////////////////////////////////////
 private static void insertAvailableTickets(Connection conn, Scanner scanner) throws SQLException {
+    System.out.println("--------------------------------------------------------------------------------------------------------------------");
     System.out.print("Enter Movie ID to add showtime: ");
     int movieId = scanner.nextInt();
     scanner.nextLine();  // Consume newline
@@ -457,12 +576,31 @@ private static void insertAvailableTickets(Connection conn, Scanner scanner) thr
     }
 }
 
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+////////////////////////////////////PURCHASE HISTORY////////////////////////////////////
 private static void viewPurchaseHistory(Connection conn) throws SQLException {
+    System.out.println("--------------------------------------------------------------------------------------------------------------------");
+    
+    // SQL query to fetch purchase history including showing_time from movie_showtimes
     String query = "SELECT p.purchase_id, m.title, p.customer_name, p.ticket_count, p.total_amount, "
                  + "p.purchase_date, p.payment_status, p.theater_type, ms.showing_time "
                  + "FROM purchases p "
                  + "JOIN movies m ON p.movie_id = m.id "
-                 + "JOIN movie_showtimes ms ON p.showtime_id = ms.id";
+                 + "LEFT JOIN movie_showtimes ms ON p.showtime_id = ms.id"; // Use LEFT JOIN for missing showtimes
+
     try (PreparedStatement stmt = conn.prepareStatement(query);
          ResultSet rs = stmt.executeQuery()) {
 
@@ -480,8 +618,9 @@ private static void viewPurchaseHistory(Connection conn) throws SQLException {
             String purchaseDate = rs.getString("purchase_date");
             String paymentStatus = rs.getString("payment_status");
             String theaterType = rs.getString("theater_type");
-            String showtime = rs.getString("showing_time");
+            String showtime = rs.getString("showing_time"); // Fetch the correct 'showing_time' from movie_showtimes
 
+            // Print each row in a formatted table
             System.out.printf("| %-11d | %-22s | %-17s | %-11d | %-11.2f | %-17s | %-17s | %-17s | %-17s |\n", 
                               purchaseId, title, customerName, ticketCount, totalAmount, purchaseDate, paymentStatus, theaterType, showtime);
         }
@@ -491,7 +630,27 @@ private static void viewPurchaseHistory(Connection conn) throws SQLException {
     }
 }
 
+
+
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+////////////////////////////////////UPDATE TICKETS////////////////////////////////////
+
     private static void updateMoviePrice(Connection conn, Scanner scanner) throws SQLException {
+        System.out.println("--------------------------------------------------------------------------------------------------------------------");
+
         System.out.println("Enter movie ID to update price:");
         int movieId = scanner.nextInt();
         scanner.nextLine();  // Consume newline
