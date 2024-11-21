@@ -535,7 +535,7 @@ private static void purchaseTicket(Connection conn, Scanner scanner) throws SQLE
             + "purchase_date, payment_status, theater_type, showing_time) "
             + "VALUES (?, ?, ?, ?, datetime('now'), ?, ?, ?)";
 
-    try (PreparedStatement stmt = conn.prepareStatement(insertPurchaseQuery)) {
+    try (PreparedStatement stmt = conn.prepareStatement(insertPurchaseQuery, PreparedStatement.RETURN_GENERATED_KEYS)) {
         stmt.setInt(1, movieId);
         stmt.setString(2, customerName);  // Insert default customer name
         stmt.setInt(3, ticketCount);
@@ -544,24 +544,52 @@ private static void purchaseTicket(Connection conn, Scanner scanner) throws SQLE
         stmt.setString(6, theaterType);
         stmt.setString(7, selectedShowingTime);
 
-        // Update available tickets after purchase
-        String updateTicketsQuery = "UPDATE movie_showtimes SET available_tickets = available_tickets - ? WHERE id = ?";
-        try (PreparedStatement updateStmt = conn.prepareStatement(updateTicketsQuery)) {
-            updateStmt.setInt(1, ticketCount);
-            updateStmt.setInt(2, selectedShowtimeId);
-            updateStmt.executeUpdate();
-        }
-
         int rowsInserted = stmt.executeUpdate();
         if (rowsInserted > 0) {
-            System.out.println("Purchase successful!");
+            try (ResultSet generatedKeys = stmt.getGeneratedKeys()) {
+                if (generatedKeys.next()) {
+                    long purchaseId = generatedKeys.getLong(1);
+
+                    // Insert receipt information
+                    String insertReceiptQuery = "INSERT INTO receipts (purchase_id, movie_id, ticket_count, total_amount, "
+                            + "purchase_date, payment_status) VALUES (?, ?, ?, ?, datetime('now'), ?)";
+                    try (PreparedStatement receiptStmt = conn.prepareStatement(insertReceiptQuery)) {
+                        receiptStmt.setLong(1, purchaseId);
+                        receiptStmt.setInt(2, movieId);
+                        receiptStmt.setInt(3, ticketCount);
+                        receiptStmt.setDouble(4, totalAmount);
+                        receiptStmt.setString(5, paymentStatus);
+                        receiptStmt.executeUpdate();
+                    }
+
+                    // Display the receipt
+                    System.out.println("\nOrder placed successfully!");
+                    System.out.println("-------- Receipt --------");
+                    System.out.println("Movie: " + movieId);
+                    System.out.println("Theater: " + theaterType);
+                    System.out.println("Tickets: " + ticketCount);
+                    System.out.println("Total Price: $" + totalAmount);
+                    System.out.println("Payment Status: " + paymentStatus);
+                    System.out.println("Thank you for your purchase!");
+                }
+            }
         } else {
             System.out.println("Failed to complete purchase.");
         }
     }
+
+    // Update available tickets after purchase
+    String updateTicketsQuery = "UPDATE movie_showtimes SET available_tickets = available_tickets - ? WHERE id = ?";
+    try (PreparedStatement updateStmt = conn.prepareStatement(updateTicketsQuery)) {
+        updateStmt.setInt(1, ticketCount);
+        updateStmt.setInt(2, selectedShowtimeId);
+        updateStmt.executeUpdate();
+    }
 }
 
 
+
+
     
     
     
@@ -572,10 +600,7 @@ private static void purchaseTicket(Connection conn, Scanner scanner) throws SQLE
     
     
     
-    
-    
-    
-////////////////////////////////////ADD TICKET////////////////////////////////////
+///////////////////////////////////ADD TICKET////////////////////////////////////
 private static void insertAvailableTickets(Connection conn, Scanner scanner) throws SQLException {
     System.out.println("--------------------------------------------------------------------------------------------------------------------");
     System.out.print("Enter Movie ID to add showtime: ");
@@ -679,28 +704,76 @@ private static void viewPurchaseHistory(Connection conn) throws SQLException {
     
 ////////////////////////////////////UPDATE TICKETS////////////////////////////////////
 
-    private static void updateMoviePrice(Connection conn, Scanner scanner) throws SQLException {
-        System.out.println("--------------------------------------------------------------------------------------------------------------------");
+  private static void updateMoviePrice(Connection conn, Scanner scanner) throws SQLException {
+    System.out.println("--------------------------------------------------------------------------------------------------------------------");
 
-        System.out.println("Enter movie ID to update price:");
-        int movieId = scanner.nextInt();
-        scanner.nextLine();  // Consume newline
+    // Check if the database connection is working
+    if (conn == null) {
+        System.out.println("Database connection is null!");
+        return;
+    } else {
+        System.out.println("Database connection successful.");
+    }
 
-        System.out.println("Enter new movie price:");
-        double newPrice = scanner.nextDouble();
-        scanner.nextLine();  // Consume newline
+    // Display the list of movies available for price update
+    String selectQuery = "SELECT id, title, genre FROM movies";
+    try (PreparedStatement stmt = conn.prepareStatement(selectQuery);
+         ResultSet rs = stmt.executeQuery()) {
 
-        String updateQuery = "UPDATE movies SET rating = ? WHERE id = ?";
-        try (PreparedStatement stmt = conn.prepareStatement(updateQuery)) {
-            stmt.setDouble(1, newPrice);
-            stmt.setInt(2, movieId);
+        // Check if any rows are returned
+        boolean hasMovies = false;
 
-            int rowsUpdated = stmt.executeUpdate();
-            if (rowsUpdated > 0) {
-                System.out.println("Movie price updated successfully!");
-            } else {
-                System.out.println("Movie not found with the specified ID.");
-            }
+        System.out.println("Movies available for price update:");
+        System.out.println("+----+------------------------+---------+");
+        System.out.println("| ID | Movie Title            | Genre   |");
+        System.out.println("+----+------------------------+---------+");
+
+        // Debugging: Check if the result set is empty or not
+        if (!rs.next()) {
+            System.out.println("No movies found in the database.");
+            return; // Exit if no movies are found
+        }
+
+        // Loop through the result set and display movie details
+        do {
+            hasMovies = true;  // Set flag to true if movies are found
+            int movieId = rs.getInt("id");
+            String title = rs.getString("title");
+            String genre = rs.getString("genre");
+
+            // Print each movie
+            System.out.printf("| %-2d | %-22s | %-7s |\n", movieId, title, genre);
+        } while (rs.next());
+
+        if (!hasMovies) {
+            System.out.println("No movies available for update.");
+        }
+        System.out.println("+----+------------------------+---------+");
+    }
+
+    // Prompt for movie ID to update price
+    System.out.println("Enter movie ID to update price:");
+    int movieId = scanner.nextInt();
+    scanner.nextLine();  // Consume newline
+
+    System.out.println("Enter new movie price:");
+    double newPrice = scanner.nextDouble();
+    scanner.nextLine();  // Consume newline
+
+    // Update the movie price in the database
+    String updateQuery = "UPDATE movies SET price = ? WHERE id = ?";
+    try (PreparedStatement stmt = conn.prepareStatement(updateQuery)) {
+        stmt.setDouble(1, newPrice);
+        stmt.setInt(2, movieId);
+
+        int rowsUpdated = stmt.executeUpdate();
+        if (rowsUpdated > 0) {
+            System.out.println("Movie price updated successfully!");
+        } else {
+            System.out.println("Movie not found with the specified ID.");
         }
     }
+}
+
+
 }
